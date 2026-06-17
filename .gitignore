@@ -1,0 +1,16 @@
+# env / runtime
+.env
+local-data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+/bin/
+/fuel-tracker
+/tmp-fc-test/
+
+# editors / OS
+.DS_Store
+*.swp
+.vscode/
+.idea/

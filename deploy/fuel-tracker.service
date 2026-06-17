@@ -1,0 +1,21 @@
+[Unit]
+Description=Fuel Tracker web app
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/fuel-tracker
+ExecStart=/opt/fuel-tracker/fuel-tracker
+Restart=on-failure
+RestartSec=3
+User=www-data
+Group=www-data
+EnvironmentFile=/opt/fuel-tracker/.env
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/fuel-tracker/data
+
+[Install]
+WantedBy=multi-user.target

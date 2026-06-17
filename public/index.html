@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <title>Fuel Tracker</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="login-view" class="view login-view">
+    <form id="login-form" class="login-card" autocomplete="off">
+      <h1>Fuel Tracker</h1>
+      <p class="muted">Sign in to log a fill.</p>
+      <label>
+        <span>Username</span>
+        <input type="text" name="username" required autocomplete="username" />
+      </label>
+      <label>
+        <span>Password</span>
+        <input type="password" name="password" required autocomplete="current-password" />
+      </label>
+      <button type="submit">Sign in</button>
+      <div id="login-error" class="error" role="alert"></div>
+    </form>
+  </div>
+
+  <div id="app-view" class="view app-view hidden">
+    <header class="app-header">
+      <div class="brand">Fuel Tracker</div>
+      <nav class="tabs" role="tablist">
+        <button class="tab active" data-tab="add" role="tab">Add</button>
+        <button class="tab" data-tab="history" role="tab">History</button>
+        <button class="tab" data-tab="dashboard" role="tab">Dashboard</button>
+      </nav>
+      <button id="logout-btn" class="logout" title="Sign out">Sign out</button>
+    </header>
+
+    <main>
+      <section class="panel" data-panel="add">
+        <h2>Log a fill</h2>
+        <form id="add-form" class="entry-form">
+          <div class="grid">
+            <label>
+              <span>Date</span>
+              <input type="date" name="date" required />
+            </label>
+            <label>
+              <span>Odometer (km)</span>
+              <input type="number" name="odometer" step="0.01" min="0" required />
+            </label>
+            <label>
+              <span>Liters</span>
+              <input type="number" name="liters" step="0.01" min="0" required />
+            </label>
+            <label>
+              <span>Price per liter (₹)</span>
+              <input type="number" name="price_per_l" step="0.01" min="0" value="110.89" required />
+            </label>
+            <label class="full">
+              <span>Fuel type</span>
+              <div class="toggle" role="radiogroup">
+                <label><input type="radio" name="fuel_type" value="regular" checked /><span>Regular</span></label>
+                <label><input type="radio" name="fuel_type" value="premium" /><span>Premium</span></label>
+              </div>
+            </label>
+            <label class="full">
+              <span>Notes (optional)</span>
+              <input type="text" name="notes" maxlength="200" />
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">Save</button>
+            <span id="add-message" class="form-message"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel hidden" data-panel="history">
+        <div class="panel-header">
+          <h2>History</h2>
+          <div class="export-group">
+            <button data-export="lifetime">Lifetime CSV</button>
+            <button data-export="month">This Month CSV</button>
+            <button data-export="range">Date Range CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="history-table">
+            <thead>
+              <tr>
+                <th data-sort="date">Date</th>
+                <th data-sort="odometer" class="num">Odo</th>
+                <th data-sort="liters" class="num">Liters</th>
+                <th data-sort="price_per_l" class="num">Price/L</th>
+                <th data-sort="total_cost" class="num">Total</th>
+                <th data-sort="fuel_type">Fuel</th>
+                <th data-sort="kmpl" class="num">kmpl</th>
+                <th data-sort="notes">Notes</th>
+                <th class="actions"></th>
+              </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+        <div id="history-empty" class="empty hidden">No entries yet. Add your first fill on the Add tab.</div>
+      </section>
+
+      <section class="panel hidden" data-panel="dashboard">
+        <div class="month-nav">
+          <button id="prev-month" aria-label="Previous month">&larr;</button>
+          <h2 id="month-label">—</h2>
+          <button id="next-month" aria-label="Next month">&rarr;</button>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="card-label">Total km</div><div class="card-value" id="stat-km">—</div></div>
+          <div class="card"><div class="card-label">Total cost</div><div class="card-value" id="stat-cost">—</div></div>
+          <div class="card"><div class="card-label">Total liters</div><div class="card-value" id="stat-liters">—</div></div>
+          <div class="card"><div class="card-label">Avg kmpl</div><div class="card-value" id="stat-kmpl">—</div></div>
+          <div class="card"><div class="card-label">Fills</div><div class="card-value" id="stat-count">—</div></div>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-header">
+            <h3>kmpl trend</h3>
+            <div id="chart-placeholder" class="muted hidden">Need another fill to calculate mileage.</div>
+          </div>
+          <canvas id="kmpl-chart" width="800" height="240"></canvas>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <header>
+        <h2 id="modal-title">Edit entry</h2>
+        <button id="modal-close" class="icon-btn" aria-label="Close">&times;</button>
+      </header>
+      <form id="edit-form" class="entry-form">
+        <div class="grid">
+          <label>
+            <span>Date</span>
+            <input type="date" name="date" required />
+          </label>
+          <label>
+            <span>Odometer (km)</span>
+            <input type="number" name="odometer" step="0.01" min="0" required />
+          </label>
+          <label>
+            <span>Liters</span>
+            <input type="number" name="liters" step="0.01" min="0" required />
+          </label>
+          <label>
+            <span>Price per liter (₹)</span>
+            <input type="number" name="price_per_l" step="0.01" min="0" required />
+          </label>
+          <label class="full">
+            <span>Fuel type</span>
+            <div class="toggle" role="radiogroup">
+              <label><input type="radio" name="fuel_type" value="regular" /><span>Regular</span></label>
+              <label><input type="radio" name="fuel_type" value="premium" /><span>Premium</span></label>
+            </div>
+          </label>
+          <label class="full">
+            <span>Notes</span>
+            <input type="text" name="notes" maxlength="200" />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="delete-btn" class="danger">Delete</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancel-btn">Cancel</button>
+          <button type="submit" class="primary">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="range-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal narrow">
+      <header>
+        <h2>Export date range</h2>
+        <button id="range-close" class="icon-btn" aria-label="Close">&times;</button>
+      </header>
+      <form id="range-form" class="entry-form">
+        <div class="grid">
+          <label>
+            <span>From</span>
+            <input type="date" name="from" required />
+          </label>
+          <label>
+            <span>To</span>
+            <input type="date" name="to" required />
+          </label>
+        </div>
+        <div class="form-actions">
+          <span class="spacer"></span>
+          <button type="button" id="range-cancel">Cancel</button>
+          <button type="submit" class="primary">Download CSV</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
